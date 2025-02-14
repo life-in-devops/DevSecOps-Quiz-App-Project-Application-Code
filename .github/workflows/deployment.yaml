@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  frontend-test:
+  frontend-code-build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -56,7 +56,7 @@ jobs:
       #       -Dsonar.sources=src/
       #       -Dsonar.verbose=true
         
-  backend-test:
+  backend-code-build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -159,8 +159,8 @@ jobs:
   #       run: snyk code test --all-projects
   #       continue-on-error: true
 
-  frontend-image:
-    needs: frontend-security
+  frontend-image-build:
+    # needs: frontend-security
     runs-on: ubuntu-latest
     permissions:
       contents: read 
@@ -205,10 +205,8 @@ jobs:
     #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
     #   continue-on-error: true
 
-
-
-  backend-image:
-    needs: backend-security
+  backend-image-build:
+    # needs: backend-security
     runs-on: ubuntu-latest
     permissions:
       contents: read 
