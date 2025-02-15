@@ -100,7 +100,7 @@ jobs:
   
 
   update-kube-manifests:
-    needs: [forntend-image-build, backend-image-build]
+    needs: [frontend-image-build, backend-image-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read 
