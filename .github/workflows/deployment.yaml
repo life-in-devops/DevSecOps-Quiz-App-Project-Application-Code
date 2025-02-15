@@ -127,10 +127,10 @@ jobs:
         export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
         export IMAGE_TAG="${{ github.sha }}"
 
-        envsubst < frontend.yaml.template | yq eval '.' frontend.yaml > frontend.yaml.new
+        envsubst < frontend.yaml.template | yq eval '' frontend.yaml > frontend.yaml.new # Corrected yq command
         mv frontend.yaml.new frontend.yaml
 
-        envsubst < backend.yaml.template | yq eval '.' backend.yaml > backend.yaml.new
+        envsubst < backend.yaml.template | yq eval '' backend.yaml > backend.yaml.new # Corrected yq command
         mv backend.yaml.new backend.yaml
 
         echo "After update:"
