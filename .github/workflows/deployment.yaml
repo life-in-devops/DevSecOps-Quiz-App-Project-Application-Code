@@ -104,44 +104,42 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Update Kubernetes manifests
-        run: |
-          git clone https://github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
-          cd DevSecOps-Quiz-App-Project-Kubernetes-Manifests/kubernetes-manifest
-          git checkout main
+    - name: Update Kubernetes manifests
+      run: |
+        git clone https://github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
+        cd DevSecOps-Quiz-App-Project-Kubernetes-Manifests/kubernetes-manifest
+        git checkout main
 
-          sudo apt-get update && sudo apt-get install -y yq
+        sudo apt-get update && sudo apt-get install -y yq
 
-          # Set IMAGE_TAG environment variable.  Use github.sha for example.
-          export IMAGE_TAG="${{ github.sha }}"  # Or however you derive your tag
+        # Set IMAGE_TAG environment variable. Use github.sha for example.
+        export IMAGE_TAG="${{ github.sha }}"
 
-          echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}" # Debug
-          echo "IMAGE_TAG: $IMAGE_TAG" # Debug
+        # Update frontend deployment file
+        yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-frontend:" + env.IMAGE_TAG' frontend.yaml > frontend.yaml.new
+        mv frontend.yaml.new frontend.yaml
 
-          # Update frontend deployment file
-          yq eval -e '.spec.template.spec.containers[].image = "${{ secrets.DOCKER_USERNAME }}" + "/quiz-app-frontend:" + env.IMAGE_TAG' frontend.yaml > frontend.yaml.new
-          mv frontend.yaml.new frontend.yaml
+        # Update backend deployment file
+        yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-backend:" + env.IMAGE_TAG' backend.yaml > backend.yaml.new
+        mv backend.yaml.new backend.yaml
 
-          # Update backend deployment file
-          yq eval -e '.spec.template.spec.containers[].image = "${{ secrets.DOCKER_USERNAME }}" + "/quiz-app-backend:" + env.IMAGE_TAG' backend.yaml > backend.yaml.new
-        
-          echo "After update:"
-          cat frontend.yaml backend.yaml
+        echo "After update:"
+        cat frontend.yaml backend.yaml
 
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
 
-          git add -A
-          git status
+        git add -A
+        git status
 
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Updated frontend and backend images to ${IMAGE_TAG}" # Use the variable!
-            git push https://${{ secrets.PAT_TOKEN }}@github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git main
-          fi
-
-  
-
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Updated frontend and backend images to ${IMAGE_TAG}"
+          git push https://${{ secrets.PAT_TOKEN }}@github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git main
+        fi
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Set as environment variable
+    
