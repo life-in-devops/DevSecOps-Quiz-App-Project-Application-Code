@@ -222,9 +222,9 @@ jobs:
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin 
         docker push ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend
   
-        
+
   update-kube-manifests:
-    needs: [forntend-code-build,backend-code-build]
+    # needs: [forntend-code-build,backend-code-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read 
