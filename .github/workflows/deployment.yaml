@@ -111,6 +111,7 @@ jobs:
       run: |
         git clone https://github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
         cd DevSecOps-Quiz-App-Project-Kubernetes-Manifests/kubernetes-manifest
+        git checkout main
 
         # Debug before replacing
         echo "Before update:"
@@ -140,5 +141,5 @@ jobs:
           echo "No changes to commit."
         else
           git commit -m "Updated frontend and backend images to ${{ env.IMAGE_TAG }}"
-          git push
+          git push https://${{ secrets.PAT_TOKEN }}@github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git main 
         fi
