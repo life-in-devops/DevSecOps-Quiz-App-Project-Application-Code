@@ -112,20 +112,25 @@ jobs:
         cd DevSecOps-Quiz-App-Project-Kubernetes-Manifests/kubernetes-manifest
         git checkout main
 
-        sudo apt-get update && sudo apt-get install -y yq
+        sudo apt-get update && sudo apt-get install -y yq gettext
 
-        yq eval '.spec.template.spec.containers[].image = "${{ secrets.DOCKER_USERNAME }}" + "/quiz-app-frontend:${{ github.sha }}"' frontend.yaml > frontend.yaml.new
+        # Create template files with placeholders
+        cat <<EOF > frontend.yaml.template
+        .spec.template.spec.containers[].image: \$DOCKER_USERNAME/quiz-app-frontend:\$IMAGE_TAG
+        EOF
+
+        cat <<EOF > backend.yaml.template
+        .spec.template.spec.containers[].image: \$DOCKER_USERNAME/quiz-app-backend:\$IMAGE_TAG
+        EOF
+
+        # Substitute variables and update YAML files
+        export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+        export IMAGE_TAG="${{ github.sha }}"
+
+        envsubst < frontend.yaml.template | yq eval '.' frontend.yaml > frontend.yaml.new
         mv frontend.yaml.new frontend.yaml
 
-        yq eval '.spec.template.spec.containers[].image = "${{ secrets.DOCKER_USERNAME }}" + "/quiz-app-backend:${{ github.sha }}"' backend.yaml > backend.yaml.new
-        mv backend.yaml.new backend.yaml
-
-        # Update frontend deployment file
-        yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-frontend:" + env.IMAGE_TAG' frontend.yaml > frontend.yaml.new
-        mv frontend.yaml.new frontend.yaml
-
-        # Update backend deployment file
-        yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-backend:" + env.IMAGE_TAG' backend.yaml > backend.yaml.new
+        envsubst < backend.yaml.template | yq eval '.' backend.yaml > backend.yaml.new
         mv backend.yaml.new backend.yaml
 
         echo "After update:"
