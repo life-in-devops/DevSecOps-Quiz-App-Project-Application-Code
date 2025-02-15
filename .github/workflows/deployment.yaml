@@ -114,8 +114,11 @@ jobs:
 
         sudo apt-get update && sudo apt-get install -y yq
 
-        # Set IMAGE_TAG environment variable. Use github.sha for example.
-        export IMAGE_TAG="${{ github.sha }}"
+        yq eval '.spec.template.spec.containers[].image = "${{ secrets.DOCKER_USERNAME }}" + "/quiz-app-frontend:${{ github.sha }}"' frontend.yaml > frontend.yaml.new
+        mv frontend.yaml.new frontend.yaml
+
+        yq eval '.spec.template.spec.containers[].image = "${{ secrets.DOCKER_USERNAME }}" + "/quiz-app-backend:${{ github.sha }}"' backend.yaml > backend.yaml.new
+        mv backend.yaml.new backend.yaml
 
         # Update frontend deployment file
         yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-frontend:" + env.IMAGE_TAG' frontend.yaml > frontend.yaml.new
