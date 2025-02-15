@@ -220,12 +220,23 @@ jobs:
       run: |
         docker build . -t ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin 
-        docker push ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend 
+        docker push ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend
+  
+        
+  update-kube-manifests:
+    needs: [forntend-code-build,backend-code-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read 
+      security-events: write 
+      actions: read
+    steps:
+    - uses: actions/checkout@v4
 
     - name: Update Kubernetes manifests
       run: |
         git clone https://github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
-        cd kube-manifestskubernetes-manifest
+        cd kubernetes-manifest
           
         # Update frontend deployment file
         sed -i 's|image: .*/quiz-app-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/quiz-app-frontend:${{ env.IMAGE_TAG }}|' frontend.yaml
