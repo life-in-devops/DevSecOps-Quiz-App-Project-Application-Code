@@ -103,9 +103,7 @@ jobs:
     needs: [frontend-image-build, backend-image-build]
     runs-on: ubuntu-latest
     permissions:
-      contents: read 
-      security-events: write 
-      actions: read
+      contents: write  # Required to push changes
     steps:
     - uses: actions/checkout@v4
 
@@ -113,15 +111,34 @@ jobs:
       run: |
         git clone https://github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
         cd DevSecOps-Quiz-App-Project-Kubernetes-Manifests/kubernetes-manifest
-          
+
+        # Debug before replacing
+        echo "Before update:"
+        cat frontend.yaml backend.yaml
+
         # Update frontend deployment file
-        sed -i 's|image: .*/quiz-app-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/quiz-app-frontend:${{ env.IMAGE_TAG }}|' frontend.yaml
+        sed -i 's|image: .*/quiz-app-frontend:.*|image: '"${{ secrets.DOCKER_USERNAME }}"'/quiz-app-frontend:'"${{ env.IMAGE_TAG }}"'|' frontend.yaml
           
         # Update backend deployment file
-        sed -i 's|image: .*/quiz-app-backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend:${{ env.IMAGE_TAG }}|' backend.yaml
+        sed -i 's|image: .*/quiz-app-backend:.*|image: '"${{ secrets.DOCKER_USERNAME }}"'/quiz-app-backend:'"${{ env.IMAGE_TAG }}"'|' backend.yaml
+
+        # Debug after replacing
+        echo "After update:"
+        cat frontend.yaml backend.yaml
           
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
-        git add frontend.yaml backend.yaml
-        git commit -m "Updated frontend and backend images to ${{ env.IMAGE_TAG }}"
-        git push
+        
+        # Ensure changes are staged
+        git add -A
+
+        # Debug to check if changes exist
+        git status
+        
+        # Commit only if changes exist
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "Updated frontend and backend images to ${{ env.IMAGE_TAG }}"
+          git push
+        fi
