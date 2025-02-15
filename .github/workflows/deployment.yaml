@@ -113,33 +113,31 @@ jobs:
         cd DevSecOps-Quiz-App-Project-Kubernetes-Manifests/kubernetes-manifest
         git checkout main
 
-        # Debug before replacing
-        echo "Before update:"
-        cat frontend.yaml backend.yaml
+        # Use yq for robust YAML manipulation
+        # Install yq if it's not already available.  This example uses apt, adjust for your environment.
+        sudo apt-get update && sudo apt-get install -y yq
 
         # Update frontend deployment file
-        sed -i 's|image: .*/quiz-app-frontend:.*|image: '"${{ secrets.DOCKER_USERNAME }}"'/quiz-app-frontend:'"${{ env.IMAGE_TAG }}"'|' frontend.yaml
-          
-        # Update backend deployment file
-        sed -i 's|image: .*/quiz-app-backend:.*|image: '"${{ secrets.DOCKER_USERNAME }}"'/quiz-app-backend:'"${{ env.IMAGE_TAG }}"'|' backend.yaml
+        yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-frontend:" + env.IMAGE_TAG' frontend.yaml > frontend.yaml.new
+        mv frontend.yaml.new frontend.yaml
 
-        # Debug after replacing
+        # Update backend deployment file
+        yq eval '.spec.template.spec.containers[].image = env.DOCKER_USERNAME + "/quiz-app-backend:" + env.IMAGE_TAG' backend.yaml > backend.yaml.new
+        mv backend.yaml.new backend.yaml
+
+        # Debug after replacing - Check the exact output!
         echo "After update:"
         cat frontend.yaml backend.yaml
-          
+
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
-        
-        # Ensure changes are staged
-        git add -A
 
-        # Debug to check if changes exist
-        git status
-        
-        # Commit only if changes exist
+        git add -A
+        git status # Debug: Check if changes exist
+
         if git diff --cached --quiet; then
           echo "No changes to commit."
         else
           git commit -m "Updated frontend and backend images to ${{ env.IMAGE_TAG }}"
-          git push https://${{ secrets.PAT_TOKEN }}@github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git main 
+          git push https://${{ secrets.PAT_TOKEN }}@github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git main
         fi
