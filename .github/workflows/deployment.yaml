@@ -160,7 +160,7 @@ jobs:
   #       continue-on-error: true
 
   frontend-image-build:
-    # needs: frontend-security
+    needs: frontend-code-build
     runs-on: ubuntu-latest
     permissions:
       contents: read 
@@ -206,7 +206,7 @@ jobs:
     #   continue-on-error: true
 
   backend-image-build:
-    # needs: backend-security
+    needs: backend-code-build
     runs-on: ubuntu-latest
     permissions:
       contents: read 
@@ -221,6 +221,25 @@ jobs:
         docker build . -t ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin 
         docker push ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend 
+
+    - name: Update Kubernetes manifests
+      run: |
+        git clone https://github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
+        cd kube-manifestskubernetes-manifest
+          
+        # Update frontend deployment file
+        sed -i 's|image: .*/quiz-app-frontend:.*|image: ${{ secrets.DOCKER_USERNAME }}/quiz-app-frontend:${{ env.IMAGE_TAG }}|' frontend.yaml
+          
+        # Update backend deployment file
+        sed -i 's|image: .*/quiz-app-backend:.*|image: ${{ secrets.DOCKER_USERNAME }}/quiz-app-backend:${{ env.IMAGE_TAG }}|' backend.yaml
+          
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add frontend.yaml backend.yaml
+        git commit -m "Updated frontend and backend images to ${{ env.IMAGE_TAG }}"
+        git push
+
+  #     git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/life-in-devops/DevSecOps-Quiz-App-Project-Kubernetes-Manifests.git
 
   #   - name: Run Trivy vulnerability scanner
   #     uses: aquasecurity/trivy-action@master
